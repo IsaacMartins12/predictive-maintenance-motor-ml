@@ -1,0 +1,36 @@
+# Ambientes virtuais
+.venv/
+venv/
+env_ml/
+.env
+
+# Cache e bytecode do Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Build / distribuição
+build/
+dist/
+*.egg-info/
+
+# IDEs e editores
+.vscode/
+.idea/
+*.swp
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Docker (overrides locais, não o docker-compose.yml principal)
+docker-compose.override.yml
+
+# Streamlit (segredos/configs locais)
+.streamlit/secrets.toml
