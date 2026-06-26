@@ -12,6 +12,8 @@
 
 ## Overview
 
+![alt](images/painel_dashboard.png)
+
 Unplanned downtime is one of the most expensive problems in industrial production, and motor failure is one of its most common causes. This project implements a complete ML pipeline, from raw sensor data to a deployed prediction service, that classifies an electric motor's operational risk level (`normal`, `low`, `moderate`, `high`) from four readings: **voltage, current, temperature, and vibration**.
 
 The focus isn't just training a model, it's the full lifecycle: exploratory analysis → model benchmarking → explainability → deployment behind a REST API and a dashboard.
