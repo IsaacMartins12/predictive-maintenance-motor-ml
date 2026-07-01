@@ -1,0 +1,27 @@
+data:
+  test_size: 0.2
+  random_state: 42
+
+models:
+  logistic_regression:
+    enabled: true
+    max_iter: 10000
+
+  decision_tree:
+    enabled: true
+    random_state: 42
+
+  random_forest:
+    enabled: true
+    n_estimators: 100
+    max_depth: null
+    min_samples_split: 2
+    min_samples_leaf: 1
+    random_state: 42
+
+  xgboost:
+    enabled: true
+    n_estimators: 100
+    max_depth: 6
+    learning_rate: 0.3
+    random_state: 42
