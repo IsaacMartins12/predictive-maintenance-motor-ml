@@ -13,11 +13,13 @@ app = FastAPI(
     title="Industrial Motor Risk Predictor"
 )
 
+
 class MotorData(BaseModel):
     voltage: float = Field(..., description="Tensão em Volts (V)")
     current: float = Field(..., description="Corrente em Amperes (A)")
     temperature: float = Field(..., description="Temperatura em °C")
     vibration: float = Field(..., description="Vibração em mm/s")
+
 
 class PredictionResult(BaseModel):
     risk: str
