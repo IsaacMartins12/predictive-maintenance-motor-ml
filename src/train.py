@@ -3,26 +3,23 @@ Script de treinamento multi-modelo com MLflow tracking.
 Treina todos os modelos habilitados em params.yaml e loga cada um como um run separado no MLflow.
 """
 
-import pandas as pd
+import os
+from pathlib import Path
+
+import joblib
 import mlflow
 import mlflow.sklearn
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import (
-    accuracy_score,
-    precision_score,
-    recall_score,
-    f1_score,
-    classification_report,
-)
-from xgboost import XGBClassifier
-from sklearn.preprocessing import LabelEncoder
-from pathlib import Path
-import joblib
-import os
+import mlflow.xgboost
+import pandas as pd
 import yaml
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (accuracy_score, classification_report, f1_score,
+                             precision_score, recall_score)
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.tree import DecisionTreeClassifier
+from xgboost import XGBClassifier
 
 # ---------- Configurações ----------
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -117,7 +114,10 @@ def train_and_log(model_name: str, model_params: dict, X_train, X_test, y_train,
             print(f"  Feature Importance: {importance}")
 
         # Log do modelo no MLflow
-        mlflow.sklearn.log_model(model, "model")
+        if model_name == "xgboost":
+            mlflow.xgboost.log_model(model, "model")
+        else:
+            mlflow.sklearn.log_model(model, "model")
 
         # Salva modelo localmente
         MODEL_DIR.mkdir(parents=True, exist_ok=True)
