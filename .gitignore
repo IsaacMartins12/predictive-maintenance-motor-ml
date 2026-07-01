@@ -34,3 +34,7 @@ docker-compose.override.yml
 
 # Streamlit (segredos/configs locais)
 .streamlit/secrets.toml
+
+# MLflow
+/mlruns/
+/mlflow/
