@@ -2,9 +2,12 @@
 
 > End-to-end machine learning system for early risk classification of industrial electric motors, based on real-time electrical and mechanical sensor readings.
 
-[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
+[![CI](https://github.com/IsaacMartins12/predictive-maintenance-motor-ml/actions/workflows/ci.yml/badge.svg)](https://github.com/IsaacMartins12/predictive-maintenance-motor-ml/actions/workflows/ci.yml)
+[![Training Pipeline](https://github.com/IsaacMartins12/predictive-maintenance-motor-ml/actions/workflows/train.yml/badge.svg)](https://github.com/IsaacMartins12/predictive-maintenance-motor-ml/actions/workflows/train.yml)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-API-009688.svg)](https://fastapi.tiangolo.com/)
 [![scikit--learn](https://img.shields.io/badge/scikit--learn-ML-F7931E.svg)](https://scikit-learn.org/)
+[![MLflow](https://img.shields.io/badge/MLflow-Tracking-0194E2.svg)](https://mlflow.org/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED.svg)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](#-license)
 
@@ -24,9 +27,10 @@ The focus isn't just training a model, it's the full lifecycle: exploratory anal
 flowchart LR
     A["Sensor Data (CSV)"] --> B["EDA & Preprocessing"]
     B --> C["Model Training & Benchmarking"]
-    C --> D["Random Forest (Production Model)"]
-    D --> E["FastAPI · /predict"]
-    E --> F["Streamlit Dashboard"]
+    C --> D["MLflow Tracking"]
+    D --> E["Random Forest (Production Model)"]
+    E --> F["FastAPI · /predict"]
+    F --> G["Streamlit Dashboard"]
 ```
 
 ## Dataset
@@ -103,43 +107,76 @@ Interactive docs available at `/docs` (Swagger UI) once the service is running.
 
 ```
 .
+├── .github/
+│   └── workflows/
+│       ├── ci.yml              # Lint + Docker build + API smoke test
+│       └── train.yml           # Training pipeline (auto on params change)
 ├── data/
 │   └── industrial_motor_sensor_data_8000.csv
+├── docs/
+│   └── MLOPS.md                # MLflow workflow documentation
 ├── notebooks/
-│   └── main.ipynb          # EDA, model benchmarking, explainability
+│   └── main.ipynb              # EDA, model benchmarking, explainability
 ├── models/
-│   └── random_forest.pkl     # production model artifact
-├── api/
-│   └── main.py                # FastAPI service
+│   ├── random_forest.pkl       # Production model
+│   ├── decision_tree.pkl
+│   ├── logistic_regression.pkl
+│   └── xgboost.pkl
+├── src/
+│   ├── api/
+│   │   └── main.py            # FastAPI service
+│   └── train.py               # Multi-model training with MLflow
 ├── dashboard/
-│   └── app.py                  # Streamlit dashboard
-├── .dockerignore
-├── .gitignore
-├── docker-compose.yml
+│   └── app.py                 # Streamlit dashboard
+├── params.yaml                # Centralized hyperparameters
+├── docker-compose.yml         # MLflow + API + Dashboard + Training
 ├── Dockerfile
-└── README.md
 ├── requirements.txt
+└── README.md
 ```
 
 ## Running Locally
 
 **With Docker (recommended):**
 ```bash
-docker compose up
+# Full stack (MLflow + API + Dashboard)
+docker compose up -d
+
+# Access points:
+# MLflow UI:  http://localhost:5000
+# API docs:   http://localhost:8000/docs
+# Dashboard:  http://localhost:8501
 ```
 
-**Manually:**
+**Run a training experiment:**
+```bash
+# Edit params.yaml, then:
+docker compose --profile training up training
+
+# View results at http://localhost:5000
+```
+
+**Manually (without Docker):**
 ```bash
 pip install -r requirements.txt
-uvicorn api.main:app --reload
-
+uvicorn src.api.main:app --reload
 ```
+
+## MLOps
+
+The project uses **MLflow** for experiment tracking and **GitHub Actions** for CI/CD:
+
+- **Experiment Tracking:** All 4 models are trained and logged (params, metrics, artifacts) as separate MLflow runs for comparison
+- **CI Pipeline:** Lint (flake8 + isort) → Docker build → API smoke test on every push/PR
+- **Training Pipeline:** Auto-triggers when `params.yaml` or `src/train.py` changes; posts a metrics comparison table as PR comment
+
+For detailed workflow instructions, see [`docs/MLOPS.md`](docs/MLOPS.md).
 
 ## Limitations & Next Steps
 
 - The dataset is synthetic and rule-generated, which explains the near-perfect benchmark scores — real sensor readings will introduce noise and overlap near class boundaries, so production performance should be re-validated against real motor data.
 - Voltage and current currently contribute less to the decision than physical intuition might suggest; worth revisiting once real-world data is available.
-- Planned: validation against live production data, model monitoring & drift detection, request logging and authentication on the API, CI/CD with automated tests.
+- Planned: validation against live production data, model monitoring & drift detection, request logging and authentication on the API.
 
 ## 📄 License
 
