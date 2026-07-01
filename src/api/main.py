@@ -1,8 +1,9 @@
-from fastapi import FastAPI
-import pandas as pd
-from pydantic import BaseModel, Field
 from pathlib import Path
+
 import joblib
+import pandas as pd
+from fastapi import FastAPI
+from pydantic import BaseModel, Field
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 MODEL_PATH = BASE_DIR / "models" / "random_forest.pkl"
