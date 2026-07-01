@@ -9,6 +9,7 @@ from pathlib import Path
 import joblib
 import mlflow
 import mlflow.sklearn
+import mlflow.xgboost
 import pandas as pd
 import yaml
 from sklearn.ensemble import RandomForestClassifier
@@ -113,7 +114,10 @@ def train_and_log(model_name: str, model_params: dict, X_train, X_test, y_train,
             print(f"  Feature Importance: {importance}")
 
         # Log do modelo no MLflow
-        mlflow.sklearn.log_model(model, "model")
+        if model_name == "xgboost":
+            mlflow.xgboost.log_model(model, "model")
+        else:
+            mlflow.sklearn.log_model(model, "model")
 
         # Salva modelo localmente
         MODEL_DIR.mkdir(parents=True, exist_ok=True)
