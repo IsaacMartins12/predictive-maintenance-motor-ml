@@ -15,6 +15,10 @@ on:
       - "data/**"
   workflow_dispatch: # Permite rodar manualmente
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   train:
     name: Train Models
@@ -86,7 +90,7 @@ jobs:
 
       - name: Post metrics to PR comment
         if: github.event_name == 'pull_request'
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@v2.9.2
         with:
           path: metrics_summary.md
 
