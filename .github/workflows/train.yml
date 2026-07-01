@@ -1,0 +1,94 @@
+name: Training Pipeline
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "params.yaml"
+      - "src/train.py"
+      - "data/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "params.yaml"
+      - "src/train.py"
+      - "data/**"
+  workflow_dispatch: # Permite rodar manualmente
+
+jobs:
+  train:
+    name: Train Models
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pandas scikit-learn xgboost mlflow pyyaml joblib
+
+      - name: Start MLflow server
+        run: |
+          mkdir -p /tmp/mlflow/artifacts
+          mlflow server \
+            --host 0.0.0.0 \
+            --port 5000 \
+            --backend-store-uri sqlite:////tmp/mlflow/mlflow.db \
+            --default-artifact-root /tmp/mlflow/artifacts &
+
+          # Wait for MLflow to be ready
+          for i in $(seq 1 20); do
+            if curl -s http://localhost:5000/ > /dev/null 2>&1; then
+              echo "MLflow server ready!"
+              break
+            fi
+            sleep 2
+          done
+
+      - name: Run training
+        env:
+          MLFLOW_TRACKING_URI: http://localhost:5000
+          MLFLOW_EXPERIMENT_NAME: predictive-maintenance-motor
+        run: python src/train.py
+
+      - name: Extract metrics
+        id: metrics
+        run: |
+          python -c "
+          import mlflow
+          mlflow.set_tracking_uri('http://localhost:5000')
+          experiment = mlflow.get_experiment_by_name('predictive-maintenance-motor')
+          runs = mlflow.search_runs(experiment_ids=[experiment.experiment_id], order_by=['metrics.f1_weighted DESC'])
+
+          summary = '## Training Results\n\n'
+          summary += '| Model | Accuracy | F1 (weighted) | Precision | Recall |\n'
+          summary += '|-------|----------|---------------|-----------|--------|\n'
+
+          for _, run in runs.iterrows():
+              model = run['params.model_type']
+              acc = run['metrics.accuracy']
+              f1 = run['metrics.f1_weighted']
+              prec = run['metrics.precision_weighted']
+              rec = run['metrics.recall_weighted']
+              summary += f'| {model} | {acc:.4f} | {f1:.4f} | {prec:.4f} | {rec:.4f} |\n'
+
+          # Write to GitHub step summary
+          with open('${{ github.workspace }}/metrics_summary.md', 'w') as f:
+              f.write(summary)
+
+          print(summary)
+          "
+
+      - name: Post metrics to PR comment
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          path: metrics_summary.md
+
+      - name: Add metrics to job summary
+        run: cat metrics_summary.md >> $GITHUB_STEP_SUMMARY
